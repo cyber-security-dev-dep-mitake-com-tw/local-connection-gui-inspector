@@ -25,7 +25,7 @@ tauri-plugin-shell = "2"
 
 # Networking
 netdev = "0.45"
-netstat2 = "0.3"
+netstat2 = "0.11"
 sysinfo = "0.37"
 pcap = "2.2"
 pnet = "0.35"
