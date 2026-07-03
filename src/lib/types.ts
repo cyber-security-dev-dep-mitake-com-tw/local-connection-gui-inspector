@@ -9,7 +9,7 @@ export interface DeviceInfo {
   layer4?: Layer4Info;
   layer5?: Layer5Info;
   layer6?: Layer6Info;
-  layer7?: Layer7Info;
+  layer7?: Layer7Info[];
   connections: ConnectionInfo[];
 }
 

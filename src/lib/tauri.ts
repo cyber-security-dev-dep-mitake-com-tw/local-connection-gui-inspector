@@ -59,3 +59,7 @@ export async function getArpTable(): Promise<
 > {
   return invoke("get_arp_table");
 }
+
+export async function listInterfaces(): Promise<string[]> {
+  return invoke<string[]>("list_interfaces");
+}

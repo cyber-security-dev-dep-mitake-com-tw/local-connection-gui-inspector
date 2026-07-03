@@ -1,5 +1,3 @@
-import { useState } from "react";
-
 interface StatusIndicatorProps {
   active: boolean;
   size?: "sm" | "md" | "lg";

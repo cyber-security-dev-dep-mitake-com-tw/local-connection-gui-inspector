@@ -190,3 +190,8 @@ pub async fn stop_capture() -> Result<Vec<PacketInfo>, String> {
 pub async fn get_arp_table() -> Result<Vec<ArpEntry>, String> {
     Ok(layer2::get_layer2_info())
 }
+
+#[tauri::command]
+pub async fn list_interfaces() -> Result<Vec<String>, String> {
+    Ok(crate::tools::pcap::list_interfaces())
+}
