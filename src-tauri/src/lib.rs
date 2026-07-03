@@ -27,6 +27,7 @@ pub fn run() {
             commands::start_capture,
             commands::stop_capture,
             commands::get_arp_table,
+            commands::list_interfaces,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
