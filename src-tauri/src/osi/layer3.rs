@@ -3,45 +3,45 @@ use crate::types::Layer3Info;
 pub fn get_layer3_info() -> Vec<Layer3Info> {
     let mut results = Vec::new();
 
-    if let Ok(interfaces) = netdev::get_interfaces() {
-        for iface in interfaces {
-            if !iface.is_up() {
-                continue;
-            }
+    let interfaces = netdev::get_interfaces();
 
-            let ipv4_addresses: Vec<String> = iface.ipv4.iter()
-                .map(|ip| ip.to_string())
-                .collect();
-
-            let ipv6_addresses: Vec<String> = iface.ipv6.iter()
-                .map(|ip| ip.to_string())
-                .collect();
-
-            let subnet_mask = iface.ipv4.first().map(|ip| {
-                format!("{}", ip)
-            });
-
-            let default_gateway = iface.gateway.as_ref().map(|gw| {
-                gw.ipv4.first().map(|ip| ip.to_string()).unwrap_or_default()
-            }).filter(|s| !s.is_empty());
-
-            let dns_servers: Vec<String> = iface.dns_servers.iter()
-                .map(|dns| dns.to_string())
-                .collect();
-
-            let is_public = ipv4_addresses.iter().any(|ip| is_public_ip(ip));
-
-            let layer3 = Layer3Info {
-                ipv4_addresses,
-                ipv6_addresses,
-                subnet_mask,
-                default_gateway,
-                dns_servers,
-                is_public,
-            };
-
-            results.push(layer3);
+    for iface in interfaces {
+        if !iface.is_up() {
+            continue;
         }
+
+        let ipv4_addresses: Vec<String> = iface.ipv4.iter()
+            .map(|ip| ip.to_string())
+            .collect();
+
+        let ipv6_addresses: Vec<String> = iface.ipv6.iter()
+            .map(|ip| ip.to_string())
+            .collect();
+
+        let subnet_mask = iface.ipv4.first().map(|ip| {
+            format!("{}", ip)
+        });
+
+        let default_gateway = iface.gateway.as_ref().and_then(|gw| {
+            gw.ipv4.first().map(|ip| ip.to_string())
+        }).filter(|s| !s.is_empty());
+
+        let dns_servers: Vec<String> = iface.dns_servers.iter()
+            .map(|dns| dns.to_string())
+            .collect();
+
+        let is_public = ipv4_addresses.iter().any(|ip| is_public_ip(ip));
+
+        let layer3 = Layer3Info {
+            ipv4_addresses,
+            ipv6_addresses,
+            subnet_mask,
+            default_gateway,
+            dns_servers,
+            is_public,
+        };
+
+        results.push(layer3);
     }
 
     results

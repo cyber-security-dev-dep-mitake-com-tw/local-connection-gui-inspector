@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 #[tauri::command]
 pub async fn get_network_snapshot() -> Result<NetworkSnapshot, String> {
-    let is_elevated = is_elevated::is_elevated();
+    let is_elevated = crate::elevation::check_elevation().is_elevated;
     let timestamp = chrono::Local::now().to_rfc3339();
 
     let layer1_data = layer1::get_layer1_info();
@@ -74,7 +74,7 @@ pub async fn get_network_snapshot() -> Result<NetworkSnapshot, String> {
             layer1: Some(l1),
             layer2: l2,
             layer3: l3,
-            layer4,
+            layer4: l4,
             layer5: Some(layer5_data.clone()),
             layer6: l6,
             layer7: l7,

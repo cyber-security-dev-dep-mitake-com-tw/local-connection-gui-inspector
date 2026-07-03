@@ -1,4 +1,4 @@
-use crate::types::{Layer2Info, ArpEntry};
+use crate::types::ArpEntry;
 use crate::oui::lookup_vendor;
 use std::process::Command;
 

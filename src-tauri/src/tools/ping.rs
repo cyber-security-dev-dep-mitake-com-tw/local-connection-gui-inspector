@@ -15,14 +15,14 @@ pub async fn ping_host(host: &str, count: u32) -> PingResult {
         .args(["-c", &count.to_string(), host])
         .output();
 
-    let duration = start.elapsed();
+    let _duration = start.elapsed();
 
     match output {
         Ok(out) => {
             let stdout = String::from_utf8_lossy(&out.stdout);
-            parse_ping_output(host, &stdout, duration.as_millis() as u64)
+            parse_ping_output(host, &stdout)
         }
-        Err(e) => PingResult {
+        Err(_e) => PingResult {
             host: host.to_string(),
             ip: "unknown".to_string(),
             packets_sent: count,
@@ -36,7 +36,7 @@ pub async fn ping_host(host: &str, count: u32) -> PingResult {
     }
 }
 
-fn parse_ping_output(host: &str, output: &str, duration_ms: u64) -> PingResult {
+fn parse_ping_output(host: &str, output: &str) -> PingResult {
     let mut result = PingResult {
         host: host.to_string(),
         ip: "unknown".to_string(),
@@ -62,17 +62,17 @@ fn parse_ping_output(host: &str, output: &str, duration_ms: u64) -> PingResult {
             let numbers: Vec<&str> = line.split_whitespace().collect();
             for (i, part) in numbers.iter().enumerate() {
                 if part.contains("transmitted") || part.contains("Sent") {
-                    if let Some(n) = numbers.get(i - 1) {
-                        result.packets_sent = n.parse().unwrap_or(0);
+                    if let Some(n) = numbers.get(i + 1) {
+                        result.packets_sent = n.trim_end_matches('%').parse().unwrap_or(0);
                     }
                 }
                 if part.contains("received") || part.contains("Received") {
-                    if let Some(n) = numbers.get(i - 1) {
+                    if let Some(n) = numbers.get(i + 1) {
                         result.packets_received = n.parse().unwrap_or(0);
                     }
                 }
                 if part.contains("loss") || part.contains("Lost") {
-                    if let Some(n) = numbers.get(i - 1) {
+                    if let Some(n) = numbers.get(i + 1) {
                         let loss_str = n.trim_end_matches('%');
                         result.loss_percent = loss_str.parse().unwrap_or(100.0);
                     }
@@ -85,7 +85,10 @@ fn parse_ping_output(host: &str, output: &str, duration_ms: u64) -> PingResult {
                 .last()
                 .unwrap_or("")
                 .split('/')
-                .filter_map(|s| s.trim().trim_matches("ms").parse().ok())
+                .filter_map(|s| {
+                    let cleaned = s.trim().trim_end_matches("ms");
+                    cleaned.parse().ok()
+                })
                 .collect();
 
             if numbers.len() >= 3 {

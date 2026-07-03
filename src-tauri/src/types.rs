@@ -12,7 +12,7 @@ pub struct DeviceInfo {
     pub layer4: Option<Layer4Info>,
     pub layer5: Option<Layer5Info>,
     pub layer6: Option<Layer6Info>,
-    pub layer7: Option<Layer7Info>,
+    pub layer7: Option<Vec<Layer7Info>>,
     pub connections: Vec<ConnectionInfo>,
 }
 

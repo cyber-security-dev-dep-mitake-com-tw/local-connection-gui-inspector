@@ -1,7 +1,7 @@
 use crate::types::ElevationStatus;
 
 pub fn check_elevation() -> ElevationStatus {
-    let elevated = is_elevated::is_elevated();
+    let elevated = check_is_elevated();
     let platform = std::env::consts::OS.to_string();
 
     let message = if elevated {
@@ -19,6 +19,36 @@ pub fn check_elevation() -> ElevationStatus {
         is_elevated: elevated,
         platform,
         message,
+    }
+}
+
+fn check_is_elevated() -> bool {
+    #[cfg(target_os = "windows")]
+    {
+        is_elevated::is_elevated()
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("id")
+            .arg("-u")
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")
+            .unwrap_or(false)
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("id")
+            .arg("-u")
+            .output()
+            .map(|o| String::from_utf8_lossy(&o.stdout).trim() == "0")
+            .unwrap_or(false)
+    }
+
+    #[cfg(not(any(target_os = "windows", target_os = "macos", target_os = "linux")))]
+    {
+        false
     }
 }
 

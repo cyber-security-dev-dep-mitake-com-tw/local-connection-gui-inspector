@@ -33,7 +33,7 @@ fn detect_protocol(port: u16, transport: &str) -> String {
     }
 
     match port {
-        80 | 8080 | 8000 | 3000 | 5173 | 4200 | 9090 => "HTTP".to_string(),
+        80 | 8000 | 4200 | 5173 => "HTTP".to_string(),
         443 | 8443 | 5443 => "HTTPS".to_string(),
         22 => "SSH".to_string(),
         21 => "FTP".to_string(),

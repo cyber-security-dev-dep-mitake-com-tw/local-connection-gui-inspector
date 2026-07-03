@@ -7,7 +7,7 @@ interface ConnectionChainProps {
   allDevices: DeviceInfo[];
 }
 
-export function ConnectionChain({ device, allDevices }: ConnectionChainProps) {
+export function ConnectionChain({ device, allDevices: _allDevices }: ConnectionChainProps) {
   const { t } = useTranslation();
 
   const gateway = device.layer3?.default_gateway;
@@ -66,7 +66,6 @@ export function ConnectionChain({ device, allDevices }: ConnectionChainProps) {
         {/* Remote Hosts */}
         {remoteHosts.map((host) => {
           const hostConnections = connections.filter((c) => c.remote_addr === host);
-          const primaryConn = hostConnections[0];
           const protocols = [...new Set(hostConnections.map((c) => c.protocol))];
 
           return (

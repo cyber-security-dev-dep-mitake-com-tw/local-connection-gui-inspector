@@ -3,7 +3,7 @@ use crate::types::Layer6Info;
 pub fn get_layer6_info(connections: &[crate::types::ConnectionInfo]) -> Layer6Info {
     let mut encodings = Vec::new();
     let mut cipher_suite = None;
-    let mut compression = None;
+    let compression = None;
 
     for conn in connections {
         if conn.is_active {

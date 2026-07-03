@@ -18,7 +18,7 @@ pub fn get_layer4_info() -> Vec<ConnectionInfo> {
                     let is_active = tcp_si.state == TcpState::Established;
 
                     let process_name = si.associated_pids.first()
-                        .and_then(|pid| system.process(Pid::from_u32(*pid)))
+                        .and_then(|pid| system.process(sysinfo::Pid::from_u32(*pid)))
                         .map(|p| p.name().to_string_lossy().to_string());
 
                     connections.push(ConnectionInfo {
@@ -35,7 +35,7 @@ pub fn get_layer4_info() -> Vec<ConnectionInfo> {
                 }
                 ProtocolSocketInfo::Udp(udp_si) => {
                     let process_name = si.associated_pids.first()
-                        .and_then(|pid| system.process(Pid::from_u32(*pid)))
+                        .and_then(|pid| system.process(sysinfo::Pid::from_u32(*pid)))
                         .map(|p| p.name().to_string_lossy().to_string());
 
                     connections.push(ConnectionInfo {

@@ -16,23 +16,21 @@ pub fn start_capture(interface: &str, filter: &str, max_packets: usize) -> Resul
         is_running: is_running.clone(),
     };
 
+    let filter_owned = filter.to_string();
+
     let cap = pcap::Capture::from_device(interface)
         .map_err(|e| format!("Failed to open device: {}", e))?
         .promisc(true)
         .snaplen(65535)
-        .timeout(Duration::from_millis(100))
+        .timeout(100)
         .open()
         .map_err(|e| format!("Failed to open capture: {}", e))?;
 
-    if !filter.is_empty() {
-        cap.setnonblock().map_err(|e| format!("Failed to set nonblock: {}", e))?;
-    }
-
     std::thread::spawn(move || {
         let mut cap = cap;
-        if !filter.is_empty() {
-            if let Ok(bpf) = cap.compile(filter, true) {
-                let _ = cap.setfilter(&bpf);
+        if !filter_owned.is_empty() {
+            if let Err(_) = cap.filter(&filter_owned, true) {
+                // Ignore filter errors
             }
         }
 
@@ -150,6 +148,8 @@ fn parse_ipv4(data: &[u8], timestamp: String, total_len: usize) -> PacketInfo {
         _ => (format!("Protocol {}", protocol_num), None, None),
     };
 
+    let info = format!("{} -> {} port {:?}", src_ip, dst_ip, dst_port);
+
     PacketInfo {
         timestamp,
         source_ip: src_ip,
@@ -158,7 +158,7 @@ fn parse_ipv4(data: &[u8], timestamp: String, total_len: usize) -> PacketInfo {
         dest_port: dst_port,
         protocol,
         length: total_len as u32,
-        info: format!("{} -> {} port {:?}", src_ip, dst_ip, dst_port),
+        info,
     }
 }
 
@@ -196,6 +196,8 @@ fn parse_ipv6(data: &[u8], timestamp: String, total_len: usize) -> PacketInfo {
         _ => format!("NextHeader {}", next_header),
     };
 
+    let info = format!("IPv6 packet from {}", src_ip);
+
     PacketInfo {
         timestamp,
         source_ip: src_ip,
@@ -204,7 +206,7 @@ fn parse_ipv6(data: &[u8], timestamp: String, total_len: usize) -> PacketInfo {
         dest_port: None,
         protocol,
         length: total_len as u32,
-        info: format!("IPv6 packet from {}", src_ip),
+        info,
     }
 }
 
