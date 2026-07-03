@@ -17,13 +17,17 @@ pub fn get_layer3_info() -> Vec<Layer3Info> {
                 .map(|ip| ip.to_string())
                 .collect();
 
-            let subnet_mask = iface.ipv4.first().map(|_| {
-                let prefix_len = count_prefix_len(&ipv4_addresses);
-                format!("{}/{}", ipv4_addresses.first().unwrap_or(&String::new()), prefix_len)
+            let subnet_mask = iface.ipv4.first().map(|ip| {
+                format!("{}", ip)
             });
 
-            let default_gateway = get_default_gateway();
-            let dns_servers = get_dns_servers();
+            let default_gateway = iface.gateway.as_ref().map(|gw| {
+                gw.ipv4.first().map(|ip| ip.to_string()).unwrap_or_default()
+            }).filter(|s| !s.is_empty());
+
+            let dns_servers: Vec<String> = iface.dns_servers.iter()
+                .map(|dns| dns.to_string())
+                .collect();
 
             let is_public = ipv4_addresses.iter().any(|ip| is_public_ip(ip));
 
@@ -41,126 +45,6 @@ pub fn get_layer3_info() -> Vec<Layer3Info> {
     }
 
     results
-}
-
-fn get_default_gateway() -> Option<String> {
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(output) = std::process::Command::new("route")
-            .args(["-n", "get", "default"])
-            .output()
-        {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines() {
-                if line.contains("gateway:") {
-                    return Some(line.split(':').nth(1)?.trim().to_string());
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(output) = std::process::Command::new("route")
-            .args(["print", "0.0.0.0"])
-            .output()
-        {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines().skip(3) {
-                let parts: Vec<&str> = line.split_whitespace().collect();
-                if parts.len() >= 3 && parts[0] == "0.0.0.0" {
-                    return Some(parts[2].to_string());
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        if let Ok(content) = std::fs::read_to_string("/proc/net/route") {
-            for line in content.lines().skip(1) {
-                let parts: Vec<&str> = line.split('\t').collect();
-                if parts.len() >= 3 && parts[1] == "00000000" {
-                    let gw_hex = parts[2];
-                    if let Ok(gw) = parse_hex_ip(gw_hex) {
-                        return Some(gw);
-                    }
-                }
-            }
-        }
-    }
-
-    None
-}
-
-#[cfg(target_os = "linux")]
-fn parse_hex_ip(hex: &str) -> Option<String> {
-    let bytes = u32::from_str_radix(hex, 16).ok()?;
-    Some(format!(
-        "{}.{}.{}.{}",
-        bytes & 0xFF,
-        (bytes >> 8) & 0xFF,
-        (bytes >> 16) & 0xFF,
-        (bytes >> 24) & 0xFF
-    ))
-}
-
-fn get_dns_servers() -> Vec<String> {
-    let mut servers = Vec::new();
-
-    #[cfg(target_os = "macos")]
-    {
-        if let Ok(output) = std::process::Command::new("scutil")
-            .arg("--dns")
-            .output()
-        {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines() {
-                if line.contains("nameserver") {
-                    if let Some(server) = line.split_whitespace().last() {
-                        if !servers.contains(&server.to_string()) {
-                            servers.push(server.to_string());
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "windows")]
-    {
-        if let Ok(output) = std::process::Command::new("powershell")
-            .args(["-Command", "Get-DnsClientServerAddress | Select-Object -ExpandProperty ServerAddresses"])
-            .output()
-        {
-            let stdout = String::from_utf8_lossy(&output.stdout);
-            for line in stdout.lines() {
-                let server = line.trim().to_string();
-                if !server.is_empty() && !servers.contains(&server) {
-                    servers.push(server);
-                }
-            }
-        }
-    }
-
-    #[cfg(target_os = "linux")]
-    {
-        if let Ok(content) = std::fs::read_to_string("/etc/resolv.conf") {
-            for line in content.lines() {
-                if line.starts_with("nameserver") {
-                    if let Some(server) = line.split_whitespace().nth(1) {
-                        servers.push(server.to_string());
-                    }
-                }
-            }
-        }
-    }
-
-    servers
-}
-
-fn count_prefix_len(addresses: &[String]) -> u32 {
-    24
 }
 
 fn is_public_ip(ip: &str) -> bool {

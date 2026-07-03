@@ -1,9 +1,7 @@
 use crate::types::*;
 use crate::osi::{layer1, layer2, layer3, layer4, layer5, layer6, layer7};
 use crate::elevation;
-use crate::oui;
 use uuid::Uuid;
-use std::collections::HashMap;
 
 #[tauri::command]
 pub async fn get_network_snapshot() -> Result<NetworkSnapshot, String> {
