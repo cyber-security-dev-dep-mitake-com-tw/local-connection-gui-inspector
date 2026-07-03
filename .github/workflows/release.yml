@@ -52,9 +52,11 @@ jobs:
 
       - name: Install Npcap SDK (Windows only)
         if: matrix.platform == 'windows-latest'
+        shell: pwsh
         run: |
-          choco install npcap-sdk -y
-        shell: bash
+          Invoke-WebRequest -Uri "https://npcap.com/dist/npcap-sdk-1.13.zip" -OutFile "$env:TEMP\npcap-sdk.zip"
+          Expand-Archive -Path "$env:TEMP\npcap-sdk.zip" -DestinationPath "C:\npcap-sdk"
+          echo "LIB=C:\npcap-sdk\Lib\x64" >> $env:GITHUB_ENV
 
       - name: Build and release
         uses: tauri-apps/tauri-action@v0
