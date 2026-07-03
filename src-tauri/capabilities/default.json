@@ -1,11 +1,27 @@
 {
-  "$schema": "../gen/schemas/desktop-schema.json",
+  "$schema": "https://schema.tauri.app/config/2",
   "identifier": "default",
-  "description": "enables the default permissions",
-  "windows": [
-    "main"
-  ],
+  "description": "Default capability for the main window",
+  "windows": ["main"],
   "permissions": [
-    "core:default"
+    "core:default",
+    "shell:default",
+    "shell:allow-open",
+    "shell:allow-execute",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        { "name": "arp", "args": ["-a"] },
+        { "name": "ping", "args": ["-c", { "validator": "\\d+" }, { "validator": ".*" }] },
+        { "name": "traceroute", "args": [{ "validator": ".*" }] },
+        { "name": "tracert", "args": [{ "validator": ".*" }] },
+        { "name": "netstat", "args": ["-an"] },
+        { "name": "ipconfig", "args": ["/all"] },
+        { "name": "ifconfig", "args": [] },
+        { "name": "system_profiler", "args": ["SPNetworkDataType"] },
+        { "name": "ndp", "args": ["-a"] },
+        { "name": "route", "args": ["-n", "get", { "validator": ".*" }] }
+      ]
+    }
   ]
 }
