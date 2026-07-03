@@ -1,14 +1,15 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useElevation } from "../../hooks/useElevation";
+import type { ViewMode } from "../../lib/types";
 
 interface SettingsProps {
   autoRefresh: boolean;
   onAutoRefreshChange: (value: boolean) => void;
   refreshInterval: number;
   onRefreshIntervalChange: (value: number) => void;
-  viewMode: "cards" | "table" | "modal";
-  onViewModeChange: (mode: "cards" | "table" | "modal") => void;
+  viewMode: ViewMode;
+  onViewModeChange: (mode: ViewMode) => void;
 }
 
 export function Settings({
@@ -67,7 +68,7 @@ export function Settings({
       {/* View Mode */}
       <SettingsSection title={t("settings.view_mode")} icon="◰">
         <div className="flex gap-2">
-          {(["cards", "table", "modal"] as const).map((mode) => (
+          {(["cards", "table", "tree", "modal"] as const).map((mode) => (
             <button
               key={mode}
               onClick={() => onViewModeChange(mode)}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useDevices } from "./hooks/useDevices";
 import { Layout } from "./components/common/Layout";
@@ -6,13 +6,16 @@ import { OsiStack } from "./components/OsiStack/OsiStack";
 import { DeviceCard } from "./components/DeviceCard/DeviceCard";
 import { ConnectionChain } from "./components/ConnectionChain/ConnectionChain";
 import { ViewModeToggle } from "./components/ViewMode/ViewMode";
+import { TreeView } from "./components/TreeView/TreeView";
+import { LayerFilter } from "./components/LayerFilter/LayerFilter";
 import { PingTool } from "./components/Tools/PingTool";
 import { TracerouteTool } from "./components/Tools/TracerouteTool";
 import { PortScanTool } from "./components/Tools/PortScanTool";
 import { PacketCaptureTool } from "./components/Tools/PacketCapture";
 import { Settings } from "./components/Settings/Settings";
 import { StatusIndicator } from "./components/DeviceCard/StatusIndicator";
-import type { DeviceInfo, ViewMode } from "./lib/types";
+import { ALL_LAYERS } from "./lib/types";
+import type { DeviceInfo, ViewMode, LayerKey } from "./lib/types";
 
 export default function App() {
   const { t } = useTranslation();
@@ -21,11 +24,26 @@ export default function App() {
   const [selectedDevice, setSelectedDevice] = useState<DeviceInfo | null>(null);
   const [refreshInterval, setRefreshInterval] = useState(5);
   const [showModal, setShowModal] = useState(false);
+  const [activeLayers, setActiveLayers] = useState<LayerKey[]>([...ALL_LAYERS]);
 
   const { snapshot, loading, error, autoRefresh, setAutoRefresh, refresh } =
     useDevices(refreshInterval * 1000);
 
   const devices = snapshot?.devices ?? [];
+
+  const filteredDevices = useMemo(() => {
+    if (activeLayers.length === ALL_LAYERS.length) return devices;
+    return devices.filter((d) => {
+      if (activeLayers.includes("layer1") && d.layer1) return true;
+      if (activeLayers.includes("layer2") && d.layer2) return true;
+      if (activeLayers.includes("layer3") && d.layer3) return true;
+      if (activeLayers.includes("layer4") && d.layer4?.connections?.length) return true;
+      if (activeLayers.includes("layer5") && d.layer5?.tls_sessions?.length) return true;
+      if (activeLayers.includes("layer6") && d.layer6) return true;
+      if (activeLayers.includes("layer7") && d.layer7?.length) return true;
+      return false;
+    });
+  }, [devices, activeLayers]);
 
   const handleDeviceSelect = (device: DeviceInfo) => {
     setSelectedDevice(device);
@@ -54,6 +72,8 @@ export default function App() {
 
           {activeTab === "dashboard" && (
             <div className="flex items-center gap-3">
+              <LayerFilter activeLayers={activeLayers} onChange={setActiveLayers} />
+              <div className="w-px h-6 bg-[#1e3a5f]" />
               <ViewModeToggle mode={viewMode} onChange={setViewMode} />
               <button
                 onClick={refresh}
@@ -92,18 +112,18 @@ export default function App() {
                 <div className="grid grid-cols-4 gap-3">
                   <StatCard
                     label="Interfaces"
-                    value={String(devices.length)}
+                    value={String(filteredDevices.length)}
                     color="#00d4ff"
                   />
                   <StatCard
                     label="Active"
-                    value={String(devices.filter((d) => d.is_active).length)}
+                    value={String(filteredDevices.filter((d) => d.is_active).length)}
                     color="#00ff41"
                   />
                   <StatCard
                     label="Connections"
                     value={String(
-                      devices.reduce((acc, d) => acc + d.connections.length, 0)
+                      filteredDevices.reduce((acc, d) => acc + d.connections.length, 0)
                     )}
                     color="#ffd60a"
                   />
@@ -111,7 +131,7 @@ export default function App() {
                     label="Protocols"
                     value={String(
                       new Set(
-                        devices
+                        filteredDevices
                           .flatMap((d) => d.layer7 ?? [])
                           .map((l) => l.protocol)
                       ).size
@@ -120,64 +140,87 @@ export default function App() {
                   />
                 </div>
 
-                {/* OSI Stack */}
-                <OsiStack
-                  devices={devices}
-                  onDeviceSelect={handleDeviceSelect}
-                />
-
-                {/* Connection Chain */}
-                {selectedDevice && viewMode !== "modal" && (
-                  <ConnectionChain
-                    device={selectedDevice}
-                    allDevices={devices}
-                  />
+                {/* Tree View Mode */}
+                {viewMode === "tree" && (
+                  <>
+                    <TreeView
+                      devices={filteredDevices}
+                      activeLayers={activeLayers}
+                      onDeviceSelect={handleDeviceSelect}
+                    />
+                    {selectedDevice && (
+                      <ConnectionChain
+                        device={selectedDevice}
+                        allDevices={filteredDevices}
+                      />
+                    )}
+                  </>
                 )}
 
-                {/* Device List */}
-                {viewMode === "cards" && (
-                  <div className="space-y-2">
-                    <h3 className="text-sm font-bold font-mono text-gray-400">
-                      {t("device.name")}s
-                    </h3>
-                    <div className="space-y-2">
-                      {devices.map((device) => (
-                        <DeviceCard
-                          key={device.id}
-                          device={device}
-                          viewMode="cards"
-                          onSelect={handleDeviceSelect}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* Non-tree modes */}
+                {viewMode !== "tree" && (
+                  <>
+                    {/* OSI Stack */}
+                    <OsiStack
+                      devices={filteredDevices}
+                      onDeviceSelect={handleDeviceSelect}
+                    />
 
-                {viewMode === "table" && (
-                  <div className="card-cyber rounded-xl overflow-hidden">
-                    <table className="table-cyber w-full">
-                      <thead>
-                        <tr>
-                          <th className="px-4 py-3 text-left">{t("device.name")}</th>
-                          <th className="px-4 py-3 text-left">{t("device.mac")}</th>
-                          <th className="px-4 py-3 text-left">{t("device.ip")}</th>
-                          <th className="px-4 py-3 text-left">{t("device.vendor")}</th>
-                          <th className="px-4 py-3 text-left">{t("device.connections")}</th>
-                          <th className="px-4 py-3 text-left">{t("device.protocol")}</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {devices.map((device) => (
-                          <DeviceCard
-                            key={device.id}
-                            device={device}
-                            viewMode="table"
-                            onSelect={handleDeviceSelect}
-                          />
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                    {/* Connection Chain */}
+                    {selectedDevice && viewMode !== "modal" && (
+                      <ConnectionChain
+                        device={selectedDevice}
+                        allDevices={filteredDevices}
+                      />
+                    )}
+
+                    {/* Device List - Cards */}
+                    {viewMode === "cards" && (
+                      <div className="space-y-2">
+                        <h3 className="text-sm font-bold font-mono text-gray-400">
+                          {t("device.name")}s
+                        </h3>
+                        <div className="space-y-2">
+                          {filteredDevices.map((device) => (
+                            <DeviceCard
+                              key={device.id}
+                              device={device}
+                              viewMode="cards"
+                              onSelect={handleDeviceSelect}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Device List - Table */}
+                    {viewMode === "table" && (
+                      <div className="card-cyber rounded-xl overflow-hidden">
+                        <table className="table-cyber w-full">
+                          <thead>
+                            <tr>
+                              <th className="px-4 py-3 text-left">{t("device.name")}</th>
+                              <th className="px-4 py-3 text-left">{t("device.mac")}</th>
+                              <th className="px-4 py-3 text-left">{t("device.ip")}</th>
+                              <th className="px-4 py-3 text-left">{t("device.vendor")}</th>
+                              <th className="px-4 py-3 text-left">{t("device.connections")}</th>
+                              <th className="px-4 py-3 text-left">{t("device.protocol")}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredDevices.map((device) => (
+                              <DeviceCard
+                                key={device.id}
+                                device={device}
+                                viewMode="table"
+                                onSelect={handleDeviceSelect}
+                              />
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </>
                 )}
               </>
             )}

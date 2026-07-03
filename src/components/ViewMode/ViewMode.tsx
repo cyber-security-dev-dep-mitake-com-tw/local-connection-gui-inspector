@@ -12,6 +12,7 @@ export function ViewModeToggle({ mode, onChange }: ViewModeProps) {
   const modes: { id: ViewMode; label: string; icon: string }[] = [
     { id: "cards", label: t("settings.cards"), icon: "▦" },
     { id: "table", label: t("settings.table"), icon: "▤" },
+    { id: "tree", label: t("settings.tree"), icon: "⌥" },
     { id: "modal", label: t("settings.modal"), icon: "◰" },
   ];
 

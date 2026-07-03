@@ -146,4 +146,8 @@ export interface ElevationStatus {
   message: string;
 }
 
-export type ViewMode = "cards" | "table" | "modal";
+export type ViewMode = "cards" | "table" | "modal" | "tree";
+
+export type LayerKey = "layer1" | "layer2" | "layer3" | "layer4" | "layer5" | "layer6" | "layer7";
+
+export const ALL_LAYERS: LayerKey[] = ["layer1", "layer2", "layer3", "layer4", "layer5", "layer6", "layer7"];
