@@ -146,6 +146,21 @@ export interface ElevationStatus {
   message: string;
 }
 
+export interface LanDevice {
+  ip: string;
+  mac: string;
+  vendor: string;
+  interface: string;
+  is_reachable: boolean;
+}
+
+export interface ConnectionSnapshot {
+  devices: DeviceInfo[];
+  lan_devices: LanDevice[];
+  timestamp: string;
+  is_elevated: boolean;
+}
+
 export type ViewMode = "cards" | "table" | "modal" | "tree";
 
 export type LayerKey = "layer1" | "layer2" | "layer3" | "layer4" | "layer5" | "layer6" | "layer7";

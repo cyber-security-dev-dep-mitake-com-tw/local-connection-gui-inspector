@@ -193,3 +193,45 @@ pub async fn get_arp_table() -> Result<Vec<ArpEntry>, String> {
 pub async fn list_interfaces() -> Result<Vec<String>, String> {
     Ok(crate::tools::pcap::list_interfaces())
 }
+
+fn classify_ip(ip: &str) -> &'static str {
+    let parts: Vec<u8> = ip.split('.').filter_map(|p| p.parse().ok()).collect();
+    if parts.len() != 4 {
+        return "unknown";
+    }
+    match parts[0] {
+        10 => "intranet",
+        172 if parts[1] >= 16 && parts[1] <= 31 => "intranet",
+        192 if parts[1] == 168 => "intranet",
+        127 => "loopback",
+        169 if parts[1] == 254 => "link-local",
+        _ => "internet",
+    }
+}
+
+#[tauri::command]
+pub async fn get_lan_devices() -> Result<Vec<LanDevice>, String> {
+    let arp_entries = layer2::get_layer2_info();
+    let devices: Vec<LanDevice> = arp_entries.into_iter().map(|e| {
+        LanDevice {
+            ip: e.ip.clone(),
+            mac: e.mac.clone(),
+            vendor: e.vendor.clone(),
+            interface: e.interface.clone(),
+            is_reachable: classify_ip(&e.ip) == "intranet",
+        }
+    }).collect();
+    Ok(devices)
+}
+
+#[tauri::command]
+pub async fn get_connection_snapshot() -> Result<ConnectionSnapshot, String> {
+    let snapshot = get_network_snapshot().await?;
+    let lan_devices = get_lan_devices().await?;
+    Ok(ConnectionSnapshot {
+        devices: snapshot.devices,
+        lan_devices,
+        timestamp: snapshot.timestamp,
+        is_elevated: snapshot.is_elevated,
+    })
+}

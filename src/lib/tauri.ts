@@ -1,11 +1,13 @@
 import { invoke } from "@tauri-apps/api/core";
 import type {
   NetworkSnapshot,
+  ConnectionSnapshot,
   PingResult,
   TracerouteResult,
   PortScanResult,
   PacketInfo,
   ElevationStatus,
+  LanDevice,
 } from "./types";
 
 export async function getNetworkSnapshot(): Promise<NetworkSnapshot> {
@@ -62,4 +64,12 @@ export async function getArpTable(): Promise<
 
 export async function listInterfaces(): Promise<string[]> {
   return invoke<string[]>("list_interfaces");
+}
+
+export async function getLanDevices(): Promise<LanDevice[]> {
+  return invoke<LanDevice[]>("get_lan_devices");
+}
+
+export async function getConnectionSnapshot(): Promise<ConnectionSnapshot> {
+  return invoke<ConnectionSnapshot>("get_connection_snapshot");
 }

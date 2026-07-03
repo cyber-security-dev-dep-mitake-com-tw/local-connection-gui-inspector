@@ -149,6 +149,20 @@
     "version": "版本",
     "description": "使用 OSI 模型的網路裝置檢查器"
   },
+  "stats": {
+    "interfaces": "網路介面",
+    "active": "啟動中",
+    "connections": "連線",
+    "protocols": "協定",
+    "no_connections": "無連線",
+    "total": "總計",
+    "lan_devices": "區域網路裝置",
+    "intranet": "內部網路",
+    "internet": "網際網路",
+    "loopback": "迴路介面",
+    "gateway": "閘道器",
+    "local": "本機"
+  },
   "common": {
     "refresh": "重新整理",
     "loading": "載入中...",

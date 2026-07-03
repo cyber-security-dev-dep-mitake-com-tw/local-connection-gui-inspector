@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useDevices } from "./hooks/useDevices";
 import { Layout } from "./components/common/Layout";
@@ -111,24 +111,37 @@ export default function App() {
                 {/* Stats Bar */}
                 <div className="grid grid-cols-4 gap-3">
                   <StatCard
-                    label="Interfaces"
+                    label={t("stats.interfaces")}
                     value={String(filteredDevices.length)}
                     color="#00d4ff"
+                    items={filteredDevices.map((d) => `${d.name} — ${d.layer3?.ipv4_addresses[0] ?? "N/A"}`)}
                   />
                   <StatCard
-                    label="Active"
+                    label={t("stats.active")}
                     value={String(filteredDevices.filter((d) => d.is_active).length)}
                     color="#00ff41"
+                    items={filteredDevices
+                      .filter((d) => d.is_active)
+                      .map((d) => `${d.name} — ${d.layer3?.ipv4_addresses[0] ?? "N/A"}`)}
                   />
                   <StatCard
-                    label="Connections"
+                    label={t("stats.connections")}
                     value={String(
                       filteredDevices.reduce((acc, d) => acc + d.connections.length, 0)
                     )}
                     color="#ffd60a"
+                    items={filteredDevices
+                      .flatMap((d) =>
+                        d.connections.map((c) => ({
+                          iface: d.name,
+                          conn: c,
+                        }))
+                      )
+                      .slice(0, 50)
+                      .map((x) => `${x.conn.remote_addr}:${x.conn.remote_port}`)}
                   />
                   <StatCard
-                    label="Protocols"
+                    label={t("stats.protocols")}
                     value={String(
                       new Set(
                         filteredDevices
@@ -137,6 +150,13 @@ export default function App() {
                       ).size
                     )}
                     color="#bf5af2"
+                    items={[
+                      ...new Set(
+                        filteredDevices
+                          .flatMap((d) => d.layer7 ?? [])
+                          .map((l) => `${l.protocol} — ${l.service}`)
+                      ),
+                    ]}
                   />
                 </div>
 
@@ -145,6 +165,7 @@ export default function App() {
                   <>
                     <TreeView
                       devices={filteredDevices}
+                      lanDevices={snapshot?.lan_devices ?? []}
                       activeLayers={activeLayers}
                       onDeviceSelect={handleDeviceSelect}
                     />
@@ -326,17 +347,56 @@ function StatCard({
   label,
   value,
   color,
+  items,
+  renderItem,
 }: {
   label: string;
   value: string;
   color: string;
+  items?: string[];
+  renderItem?: (item: string) => React.ReactNode;
 }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
   return (
-    <div className="card-cyber rounded-lg p-3">
-      <p className="text-xs text-gray-500 font-mono">{label}</p>
-      <p className="text-xl font-bold font-mono" style={{ color }}>
-        {value}
-      </p>
+    <div ref={ref} className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="w-full text-left card-cyber rounded-lg p-3 hover:border-[color:var(--hover)] transition-colors cursor-pointer"
+        style={{ ["--hover" as string]: color }}
+      >
+        <p className="text-xs text-gray-500 font-mono">{label}</p>
+        <p className="text-xl font-bold font-mono" style={{ color }}>
+          {value}
+        </p>
+      </button>
+
+      {open && items && items.length > 0 && (
+        <div className="absolute z-50 mt-1 w-full max-h-60 overflow-auto card-cyber rounded-lg border border-[#1e3a5f] shadow-lg">
+          <div className="p-2 space-y-1">
+            {items.map((item, i) => (
+              <div
+                key={i}
+                className="text-[10px] font-mono text-gray-400 px-2 py-1 rounded hover:bg-[#111827]/60 truncate"
+              >
+                {renderItem ? renderItem(item) : item}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

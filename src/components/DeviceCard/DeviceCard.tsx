@@ -17,15 +17,18 @@ export function DeviceCard({ device, viewMode, onSelect }: DeviceCardProps) {
     return <TableRow device={device} onSelect={onSelect} />;
   }
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setExpanded((prev) => !prev);
+    onSelect?.(device);
+  };
+
   return (
     <div
       className={`card-cyber rounded-xl p-4 cursor-pointer transition-all duration-300 ${
         expanded ? "ring-1 ring-[#00d4ff]/30" : ""
       }`}
-      onClick={() => {
-        setExpanded(!expanded);
-        onSelect?.(device);
-      }}
+      onClick={handleClick}
     >
       <div className="flex items-center gap-3">
         <StatusIndicator active={device.is_active} />
@@ -87,10 +90,10 @@ export function DeviceCard({ device, viewMode, onSelect }: DeviceCardProps) {
           {device.layer3 && (
             <LayerSection title={t("osi.layer3")} color="#bf5af2">
               {device.layer3.ipv4_addresses.map((ip, i) => (
-                <InfoRow key={i} label={`IPv4`} value={ip} />
+                <InfoRow key={i} label="IPv4" value={ip} />
               ))}
               {device.layer3.ipv6_addresses.map((ip, i) => (
-                <InfoRow key={i} label={`IPv6`} value={ip} />
+                <InfoRow key={i} label="IPv6" value={ip} />
               ))}
               {device.layer3.subnet_mask && (
                 <InfoRow label={t("device.subnet")} value={device.layer3.subnet_mask} />
@@ -109,7 +112,7 @@ export function DeviceCard({ device, viewMode, onSelect }: DeviceCardProps) {
               <p className="text-xs text-gray-400 mb-2">
                 {device.layer4.connections.length} {t("device.connections").toLowerCase()}
               </p>
-              {device.layer4.connections.slice(0, 10).map((conn, i) => (
+              {device.layer4.connections.slice(0, 15).map((conn, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs font-mono py-0.5">
                   <StatusIndicator active={conn.is_active} size="sm" />
                   <span className="text-gray-400">
@@ -125,6 +128,11 @@ export function DeviceCard({ device, viewMode, onSelect }: DeviceCardProps) {
                   )}
                 </div>
               ))}
+              {device.layer4.connections.length > 15 && (
+                <p className="text-[10px] text-gray-600 font-mono mt-1">
+                  +{device.layer4.connections.length - 15} more...
+                </p>
+              )}
             </LayerSection>
           )}
 

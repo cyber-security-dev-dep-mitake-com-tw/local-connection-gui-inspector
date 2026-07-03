@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { getNetworkSnapshot } from "../lib/tauri";
-import type { NetworkSnapshot } from "../lib/types";
+import { getConnectionSnapshot } from "../lib/tauri";
+import type { ConnectionSnapshot } from "../lib/types";
 
 export function useDevices(intervalMs: number = 5000) {
-  const [snapshot, setSnapshot] = useState<NetworkSnapshot | null>(null);
+  const [snapshot, setSnapshot] = useState<ConnectionSnapshot | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [autoRefresh, setAutoRefresh] = useState(true);
@@ -12,7 +12,7 @@ export function useDevices(intervalMs: number = 5000) {
   const refresh = useCallback(async () => {
     try {
       setError(null);
-      const data = await getNetworkSnapshot();
+      const data = await getConnectionSnapshot();
       setSnapshot(data);
     } catch (e) {
       setError(String(e));

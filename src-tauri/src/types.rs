@@ -166,3 +166,20 @@ pub struct ElevationStatus {
     pub platform: String,
     pub message: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LanDevice {
+    pub ip: String,
+    pub mac: String,
+    pub vendor: String,
+    pub interface: String,
+    pub is_reachable: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ConnectionSnapshot {
+    pub devices: Vec<DeviceInfo>,
+    pub lan_devices: Vec<LanDevice>,
+    pub timestamp: String,
+    pub is_elevated: bool,
+}

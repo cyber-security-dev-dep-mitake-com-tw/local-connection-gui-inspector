@@ -149,6 +149,20 @@
     "version": "Version",
     "description": "A network device inspector using the OSI model"
   },
+  "stats": {
+    "interfaces": "Interfaces",
+    "active": "Active",
+    "connections": "Connections",
+    "protocols": "Protocols",
+    "no_connections": "No connections",
+    "total": "Total",
+    "lan_devices": "LAN Devices",
+    "intranet": "Intranet",
+    "internet": "Internet",
+    "loopback": "Loopback",
+    "gateway": "Gateway",
+    "local": "Local"
+  },
   "common": {
     "refresh": "Refresh",
     "loading": "Loading...",
