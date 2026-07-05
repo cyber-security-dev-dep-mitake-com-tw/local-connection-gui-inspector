@@ -1,7 +1,10 @@
 use crate::types::ElevationStatus;
+use std::sync::atomic::{AtomicBool, Ordering};
+
+static ADMIN_GRANTED: AtomicBool = AtomicBool::new(false);
 
 pub fn check_elevation() -> ElevationStatus {
-    let elevated = check_is_elevated();
+    let elevated = check_is_elevated() || ADMIN_GRANTED.load(Ordering::Relaxed);
     let platform = std::env::consts::OS.to_string();
 
     let message = if elevated {
@@ -20,6 +23,10 @@ pub fn check_elevation() -> ElevationStatus {
         platform,
         message,
     }
+}
+
+pub fn mark_admin_granted() {
+    ADMIN_GRANTED.store(true, Ordering::Relaxed);
 }
 
 fn check_is_elevated() -> bool {
@@ -64,7 +71,14 @@ pub fn request_elevation() -> bool {
         .output();
 
     match result {
-        Ok(output) => output.status.success(),
+        Ok(output) => {
+            if output.status.success() {
+                mark_admin_granted();
+                true
+            } else {
+                false
+            }
+        }
         Err(_) => false,
     }
 }
