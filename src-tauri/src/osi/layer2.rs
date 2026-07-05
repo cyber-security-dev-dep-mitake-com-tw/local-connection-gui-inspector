@@ -108,7 +108,7 @@ fn parse_arp_line_windows(line: &str) -> Option<ArpEntry> {
             return None;
         }
 
-        let mac = mac.replace('-', ':');
+        let mac = mac.replace('-', ":");
         let vendor = lookup_vendor(&mac);
 
         Some(ArpEntry {
